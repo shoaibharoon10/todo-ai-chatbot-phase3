@@ -1,0 +1,23 @@
+name: hackathon-todo
+version: "1.0"
+specs_dir: specs
+features_dir: specs/features
+api_dir: specs/api
+database_dir: specs/database
+ui_dir: specs/ui
+
+phases:
+  phase1-console:
+    features:
+      - task-crud
+
+  phase2-web:
+    features:
+      - task-crud
+      - authentication
+
+  phase3-chatbot:
+    features:
+      - task-crud
+      - authentication
+      - chatbot
