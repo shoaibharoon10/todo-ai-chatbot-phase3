@@ -1,5 +1,13 @@
 import { authClient } from "@/lib/auth-client";
-import type { Task, CreateTaskPayload, UpdateTaskPayload, ApiError } from "@/types";
+import type {
+  Task,
+  CreateTaskPayload,
+  UpdateTaskPayload,
+  ApiError,
+  ChatResponse,
+  ChatMessage,
+  Conversation,
+} from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -96,4 +104,39 @@ export async function deleteTask(taskId: number): Promise<void> {
 
 export async function toggleTask(taskId: number): Promise<Task> {
   return request<Task>(`/api/tasks/${taskId}/complete`, { method: "PATCH" });
+}
+
+// Phase 3: Chat API functions
+
+export async function sendChatMessage(
+  userId: string,
+  message: string,
+  options?: {
+    conversationId?: string;
+    userName?: string;
+    userEmail?: string;
+  },
+): Promise<ChatResponse> {
+  return request<ChatResponse>(`/api/${userId}/chat`, {
+    method: "POST",
+    body: {
+      message,
+      conversation_id: options?.conversationId,
+      user_name: options?.userName,
+      user_email: options?.userEmail,
+    },
+  });
+}
+
+export async function getConversations(userId: string): Promise<Conversation[]> {
+  return request<Conversation[]>(`/api/${userId}/conversations`);
+}
+
+export async function getMessages(
+  userId: string,
+  conversationId: string,
+): Promise<ChatMessage[]> {
+  return request<ChatMessage[]>(
+    `/api/${userId}/conversations/${conversationId}/messages`,
+  );
 }

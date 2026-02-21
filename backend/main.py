@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 from db import engine
+from routes.chat import router as chat_router
 from routes.tasks import router as task_router
 
 load_dotenv()
@@ -32,3 +33,4 @@ app.add_middleware(
 )
 
 app.include_router(task_router)
+app.include_router(chat_router)
