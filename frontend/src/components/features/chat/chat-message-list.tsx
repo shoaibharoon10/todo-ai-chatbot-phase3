@@ -45,12 +45,8 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
       ))}
       {isLoading && (
         <div className="flex justify-start">
-          <div className="rounded-2xl bg-slate-100 px-4 py-2.5 dark:bg-slate-800">
-            <div className="flex items-center gap-1">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
-            </div>
+          <div className="relative overflow-hidden rounded-2xl bg-slate-100 px-16 py-5 dark:bg-slate-800">
+            <div className="animate-shimmer absolute inset-0" />
           </div>
         </div>
       )}

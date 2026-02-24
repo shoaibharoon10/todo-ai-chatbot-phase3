@@ -9,7 +9,7 @@ export default function SignupPage() {
           Create your account
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Get started with TaskFlow in seconds
+          Get started with TaskPulse in seconds
         </p>
       </div>
 

@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { deleteTask } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { enqueueAction } from "@/lib/action-queue";
 import type { Task } from "@/types";
 
 interface TaskDeleteDialogProps {
@@ -22,6 +24,8 @@ interface TaskDeleteDialogProps {
 }
 
 export function TaskDeleteDialog({ task, open, onOpenChange, onDeleted }: TaskDeleteDialogProps) {
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id ?? "";
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -32,9 +36,15 @@ export function TaskDeleteDialog({ task, open, onOpenChange, onDeleted }: TaskDe
       onDeleted(task.id);
       toast.success("Task deleted");
       onOpenChange(false);
-    } catch (err) {
-      const message = (err as { detail?: string })?.detail || "Failed to delete task.";
-      toast.error(message);
+    } catch {
+      if (typeof navigator !== "undefined" && !navigator.onLine && userId) {
+        await enqueueAction(userId, { type: "delete", payload: task.id });
+        onDeleted(task.id);
+        toast.info("Queued for deletion — will sync when connected");
+        onOpenChange(false);
+        return;
+      }
+      toast.error("Failed to delete task.");
     } finally {
       setIsDeleting(false);
     }

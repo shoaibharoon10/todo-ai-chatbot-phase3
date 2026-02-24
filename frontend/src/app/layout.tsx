@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TaskFlow — Modern Task Management",
-  description: "A professional, beautiful task management app built for the modern web.",
+  title: "TaskPulse — Feel the rhythm of your work",
+  description: "AI-driven todos that keep you moving.",
 };
 
 export default function RootLayout({
@@ -26,6 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366F1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

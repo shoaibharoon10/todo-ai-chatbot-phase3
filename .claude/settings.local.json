@@ -68,7 +68,15 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.cohere.com)",
-      "WebFetch(domain:deepwiki.com)"
+      "WebFetch(domain:deepwiki.com)",
+      "mcp__ide__getDiagnostics",
+      "Bash(where:*)",
+      "Bash(tasklist:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXItMDAxIiwiaXNzIjoidGFza2Zsb3ctd2ViIiwiYXVkIjoidGFza2Zsb3ctYXBpIiwiaWF0IjoxNzcxNDEzMzE3LCJleHAiOjE3NzE0MTY5MTd9.iSKrcdo5foqhQeGTysgRy0032ZmdkhGwyp3S7M-OwQ4\")",
+      "Bash(cd:*)",
+      "Bash(echo === TEST 2: Who am I? ===:*)",
+      "Bash(echo === TEST 5: No user identity \\(backward compat\\) ===:*)",
+      "Bash(cd \"D:/Q4Hack/Hackathon_2_by_Claude/Phase_3\\(ChatBot\\)/frontend\" && npm cache clean --force 2>&1)"
     ]
   }
 }

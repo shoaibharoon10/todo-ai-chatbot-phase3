@@ -1,3 +1,25 @@
+export type PriorityLevel = "low" | "medium" | "high" | "urgent";
+
+export interface WeeklyPoint {
+  date: string;
+  completed: number;
+}
+
+export interface StatsResponse {
+  total: number;
+  completed: number;
+  pending: number;
+  overdue: number;
+  completion_rate: number;
+  weekly: WeeklyPoint[];
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+}
+
 export interface Task {
   id: number;
   user_id: string;
@@ -6,17 +28,37 @@ export interface Task {
   completed: boolean;
   created_at: string;
   updated_at: string;
+  priority: PriorityLevel;
+  due_date?: string | null;
+  recurrence_rule?: string | null;
+  recurrence_parent_id?: number | null;
+  next_occurrence?: Task | null;
+  tags?: Tag[];
+  notes?: string | null;
+  reminder_offset_minutes?: number | null;
 }
 
 export interface CreateTaskPayload {
   title: string;
   description?: string;
+  due_date?: string | null;
+  recurrence_rule?: string | null;
+  priority?: PriorityLevel;
+  tag_ids?: number[];
+  notes?: string | null;
+  reminder_offset_minutes?: number | null;
 }
 
 export interface UpdateTaskPayload {
   title?: string;
   description?: string | null;
   completed?: boolean;
+  due_date?: string | null;
+  recurrence_rule?: string | null;
+  priority?: PriorityLevel;
+  tag_ids?: number[];
+  notes?: string | null;
+  reminder_offset_minutes?: number | null;
 }
 
 export interface User {

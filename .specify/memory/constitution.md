@@ -1,39 +1,72 @@
 <!--
   Sync Impact Report
   ===================
-  Version change: 1.0.0 → 1.1.0 (Phase 3 AI Chatbot amendment)
+  Version change: 1.2.0 → 1.2.1 (TaskPulse Brand Identity amendment)
 
   Modified principles:
-    - Principle IV: Immutable Technology Stack — added Cohere API
-      (Command models) for Phase 3 AI chatbot. No OpenAI dependencies.
-    - Principle V: API-First Design — added chat endpoint
-      `/api/{user_id}/chat` secured with JWT.
+    - Principle IX (new): Brand Identity & UI Guidelines — establishes
+      TaskPulse brand name, colour palette, typography rules, animation
+      conventions, and glassmorphism UI patterns. Frontend-only; no backend
+      or API contract changes.
 
   Added sections:
-    - Principle VII: AI Chatbot Architecture (Cohere + MCP Tools)
-    - Backend conventions for Cohere integration
-    - `CO_API_KEY` environment variable
+    - Principle IX: Brand Identity & UI Guidelines
+    - Brand colours registered in Technology Stack & Conventions
 
   Removed sections:
-    - None (backward compatible with Phase 2)
+    - None (fully backward compatible with 1.2.0)
 
   Templates requiring updates:
     - .specify/templates/plan-template.md — ✅ compatible
-      (Constitution Check section aligns; chatbot additions are additive)
     - .specify/templates/spec-template.md — ✅ compatible
-      (User stories structure unchanged; new feature specs follow same format)
     - .specify/templates/tasks-template.md — ✅ compatible
-      (Task phasing structure unchanged; chatbot tasks follow same pattern)
     - .specify/templates/phr-template.prompt.md — ✅ compatible
-      (No constitution-specific references)
 
   Follow-up TODOs:
-    - Create Phase 3 spec: specs/003-ai-chatbot/spec.md
-    - Add `cohere` to backend/requirements.txt
-    - Add `CO_API_KEY` to .env and .env.example
+    - Update CLAUDE.md root title references from "Hackathon Todo App" to
+      "TaskPulse" (cosmetic only, no functional impact)
+
+  ───────────────────────────────────────────────────────────────────────
+  Previous Sync Impact Report (1.1.0 → 1.2.0):
+  Version change: 1.1.0 → 1.2.0 (Phase 4 Advanced Features amendment)
+
+  Modified principles:
+    - Principle IV: Immutable Technology Stack — added python-rrule (backend
+      recurrence), recharts (frontend analytics charts), idb-keyval (IndexedDB
+      offline cache), next-pwa (optional PWA service worker). No alternatives
+      permitted without a further amendment.
+    - Principle V: API-First Design — extended tasks schema (due_date, priority,
+      recurrence_rule, notes); added /api/{user_id}/stats endpoint; added
+      /api/{user_id}/tags endpoints. Database schema extended (non-breaking;
+      all new columns nullable or have defaults).
+    - Principle VII: AI Chatbot Architecture — extended MCP tool catalogue
+      to include new Phase 4 skills (get_stats, add_tag, remove_tag, etc.).
+      NL date/priority/tag parsing via Cohere tool calling is authoritative.
+
+  Added sections:
+    - Principle VIII: Phase 4 Advanced Feature Governance
+    - Phase 4 features catalogue in Config section
+    - New environment variable: NEXT_PUBLIC_VAPID_PUBLIC_KEY (optional)
+
+  Removed sections:
+    - None (fully backward compatible with Phase 3)
+
+  Templates requiring updates:
+    - .specify/templates/plan-template.md — ✅ compatible
+    - .specify/templates/spec-template.md — ✅ compatible
+    - .specify/templates/tasks-template.md — ✅ compatible
+    - .specify/templates/phr-template.prompt.md — ✅ compatible
+
+  Follow-up TODOs:
+    - Add python-rrule to backend/requirements.txt (when 009 is implemented)
+    - Add recharts to frontend package.json (when 010 is implemented)
+    - Add idb-keyval to frontend package.json (when 011 is implemented)
+    - Add Alembic migration for tasks table extensions (due_date, priority,
+      recurrence_rule, notes) before implementing 005/007/009/012
+    - Create tags + task_tags tables migration before implementing 008
 -->
 
-# Hackathon Todo App Constitution
+# TaskPulse Constitution
 
 ## Core Principles
 
@@ -66,6 +99,8 @@
   mismatches MUST return 403 Forbidden.
 - AI chatbot responses MUST be scoped to the authenticated user's
   data. The chatbot MUST NOT access or reveal other users' tasks.
+- Tags, analytics, and all Phase 4 data MUST be equally isolated by
+  `user_id`.
 - Rationale: Multi-tenant isolation is a core security requirement
   and a primary test target for the hackathon.
 
@@ -95,6 +130,11 @@
     and tool use. No OpenAI dependencies permitted.
   - **Dev Environment**: docker-compose (frontend:3000, backend:8000)
   - **Spec Tooling**: Claude Code + Spec-Kit Plus
+  - **Phase 4 additions** (locked upon ratification):
+    - `python-rrule` — RFC 5545 recurrence rule parsing (backend)
+    - `recharts` — declarative React charts for analytics (frontend)
+    - `idb-keyval` — lightweight IndexedDB wrapper for offline cache (frontend)
+    - `next-pwa` — optional service worker / web app manifest (frontend)
 - Server Components MUST be used by default; Client Components only
   when interactivity, browser APIs, or React hooks are required.
 - API calls from the frontend MUST go through the centralized client
@@ -102,33 +142,50 @@
 - The chat UI MUST be a custom Next.js component integrated into the
   existing frontend. No third-party chat UI kits (e.g., ChatKit)
   are permitted.
+- Offline caching (feature 011) MUST use `idb-keyval` for IndexedDB;
+  no localStorage for structured task data.
+- Browser Notifications (feature 006) MUST use the native
+  Notification API. No third-party push notification SDKs.
 - Rationale: Stack consistency eliminates integration surprises and
   keeps all agents aligned.
 
 ### V. API-First Design
 
-- All task endpoints MUST be RESTful and scoped under
-  `/api/{user_id}/tasks`:
-  - `GET /api/{user_id}/tasks` — list (supports `?status=` and `?sort=`)
-  - `POST /api/{user_id}/tasks` — create
-  - `GET /api/{user_id}/tasks/{id}` — read single
-  - `PUT /api/{user_id}/tasks/{id}` — full update
-  - `DELETE /api/{user_id}/tasks/{id}` — delete
-  - `PATCH /api/{user_id}/tasks/{id}/complete` — toggle completion
+- All task endpoints MUST be RESTful and scoped under `/api/tasks`:
+  - `GET /api/tasks` — list (supports `?status=`, `?sort=`,
+    `?priority=`, `?tag=`, `?overdue=true`)
+  - `POST /api/tasks` — create
+  - `GET /api/tasks/{id}` — read single
+  - `PUT /api/tasks/{id}` — full update
+  - `DELETE /api/tasks/{id}` — delete
+  - `PATCH /api/tasks/{id}/complete` — toggle completion
 - The chat endpoint MUST be:
   - `POST /api/{user_id}/chat` — send a natural language message,
     returns AI response with any tool-executed results.
     Secured with JWT. The `user_id` in the URL MUST match the JWT
     `sub` claim.
+- Phase 4 endpoints:
+  - `GET /api/{user_id}/stats` — task analytics (completion rate,
+    weekly trend, overdue count). Secured with JWT.
+  - `GET /api/{user_id}/tags` — list user's tags
+  - `POST /api/{user_id}/tags` — create tag
+  - `DELETE /api/{user_id}/tags/{tag_id}` — delete tag
 - All responses MUST be JSON. Request/response validation MUST use
   Pydantic models. Errors MUST use FastAPI `HTTPException`.
 - The backend MUST connect to Neon PostgreSQL via `DATABASE_URL` env var.
-- Database schema (immutable until amendment):
+- Database schema (base, immutable until amendment):
   - `users` table: managed by Better Auth (id: string PK, email: unique)
   - `tasks` table: id (int PK), user_id (string FK -> users.id),
     title (string not null), description (text nullable),
     completed (bool default false), created_at/updated_at (timestamps)
   - Indexes: `tasks.user_id`, `tasks.completed`
+- Phase 4 schema extensions (additive, non-breaking):
+  - `tasks` table additions: due_date (timestamp nullable),
+    priority (string default 'medium'), recurrence_rule (text nullable),
+    recurrence_parent_id (int FK -> tasks.id nullable), notes (text nullable)
+  - `tags` table: id (int PK), user_id (string), name (string), color (string)
+  - `task_tags` join table: task_id (int FK), tag_id (int FK)
+  - Indexes: `tasks.due_date`, `tasks.priority`, `tags.user_id`
 - Rationale: Explicit API contracts enable parallel frontend/backend
   development and clear testing targets.
 
@@ -162,31 +219,106 @@
   sent with each request if needed).
 - **MCP Tools as Skills**: Task operations are exposed to the LLM
   as callable tools (functions) via Cohere's tool-use API:
-  - `add_task(title, description?)` — create a task for the user
-  - `list_tasks(status?, sort?)` — list the user's tasks
-  - `update_task(task_id, title?, description?, completed?)` — update
+  - `add_task(title, description?, due_date?, priority?, recurrence_rule?, notes?)` — create a task
+  - `list_tasks(status?, sort?, priority?, tag?, overdue?)` — list tasks
+  - `update_task(task_id, title?, description?, completed?, due_date?, priority?, notes?)` — update
   - `delete_task(task_id)` — delete a task
   - `complete_task(task_id)` — toggle task completion
+  - `get_stats()` — return analytics summary (Phase 4)
+  - `add_tag(name, color?)` — create a tag (Phase 4)
+  - `tag_task(task_id, tag_name)` — apply tag to task (Phase 4)
+- **Natural Language Parsing via Cohere**: Due dates, priorities,
+  tags, and recurrence expressions MUST be parsed by the Cohere model
+  from free-form text before invoking tools. The backend does NOT
+  perform NL date parsing independently; Cohere is the authoritative
+  NLU layer.
+  - "add a task due tomorrow" → `add_task(due_date="<ISO date>")`
+  - "high priority: review PR" → `add_task(priority="high")`
+  - "add daily standup every weekday" → `add_task(recurrence_rule="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR")`
+  - "how many tasks did I complete this week?" → `get_stats()`
 - All tool executions MUST persist results in the database via the
   existing SQLModel/Neon PostgreSQL stack. Tools are thin wrappers
   around the existing CRUD logic.
 - **Orchestrator pattern**: The Cohere chat API acts as the
-  orchestrator. When the model decides to call a tool, the backend
-  executes it and returns the result to Cohere for final response
-  generation. Multi-step tool chains (e.g., "list my tasks then
-  delete the completed ones") MUST be supported via iterative
+  orchestrator. Multi-step tool chains MUST be supported via iterative
   tool-call loops.
-- **Subagent extensibility**: Additional subagents/skills (e.g.,
-  reminder subagent using `update_task`, summary subagent) MAY be
-  added in future amendments without architectural changes.
-- Natural language commands MUST map to tool calls. Examples:
-  - "Add a task called Buy groceries" -> `add_task`
-  - "Show my pending tasks" -> `list_tasks(status=pending)`
-  - "Mark task 3 as done" -> `complete_task(task_id=3)`
-  - "Delete all completed tasks" -> `list_tasks` + `delete_task` chain
 - Rationale: Cohere's tool-use API provides a clean separation
   between NLU (model) and execution (tools), enabling a maintainable
-  and extensible agent architecture without vendor lock-in to OpenAI.
+  and extensible agent architecture.
+
+### VIII. Phase 4 Advanced Feature Governance
+
+- Phase 4 features are **additive only**: they extend the existing
+  schema, API, and UI without removing or breaking any Phase 1–3
+  functionality.
+- **Browser-local rule**: Features that operate entirely in the
+  browser (notifications, offline cache) MUST be implemented using
+  browser-native APIs or locked Phase 4 libraries. No server-side
+  state for these features.
+- **Offline-first contract**: When `idb-keyval` cache is populated,
+  task reads MUST prefer the cache and sync in the background. Write
+  operations MUST queue when offline and flush on reconnect.
+- **Recurrence contract**: Recurring task completion MUST trigger
+  creation of the next occurrence using `python-rrule` to calculate
+  the next due date from the RRULE string. The original task's
+  `recurrence_rule` is preserved; the new task inherits it.
+- **Analytics contract**: The `/api/{user_id}/stats` endpoint is
+  read-only. It MUST compute metrics from the live `tasks` table;
+  no separate analytics table is required.
+- **Tag uniqueness**: Tags are unique per user by name. Creating a
+  duplicate tag name returns the existing tag (idempotent).
+- **Priority enum**: Valid values are `low`, `medium`, `high`,
+  `urgent`. Default is `medium`. Invalid values MUST return 422.
+- **Due date format**: All due dates MUST be stored as UTC ISO 8601
+  timestamps. The frontend MUST display them in the user's local
+  timezone (browser-native `Intl.DateTimeFormat`).
+- Rationale: Clear contracts for each Phase 4 feature prevent
+  implementation drift and ensure consistent behavior across agents.
+
+### IX. Brand Identity & UI Guidelines
+
+- **Product name**: TaskPulse (capitalised exactly; no spaces; replaces
+  all prior "Hackathon Todo", "Todo App", and "TaskFlow" references in
+  user-visible surfaces).
+- **Taglines**:
+  - Primary: "Feel the rhythm of your work"
+  - Secondary: "AI-driven todos that keep you moving."
+- **UI theme**: Vibrant Professional — Glassmorphism panels with
+  modern Bento-style grids and subtle micro-animations. No skeuomorphic
+  or flat-minimal styles.
+- **Core colour palette** (registered as CSS custom properties and
+  Tailwind brand-* utilities; no alternatives without amendment):
+  - `--brand-indigo / brand-indigo`: #6366F1 (Electric Indigo) — primary
+    actions, active nav states, primary buttons, focus rings, links.
+  - `--brand-teal  / brand-teal`:   #0D9488 (Deep Teal) — secondary
+    actions, success states, secondary CTAs.
+  - `--brand-orange / brand-orange`: #F97316 (Sunset Orange) — urgent
+    priority badges, overdue indicators, notifications, high-emphasis CTAs.
+  - Neutral: Tailwind `slate-50` (light) / `slate-900` (dark) for
+    backgrounds and body text. No pure black (#000) or pure white (#fff)
+    backgrounds.
+- **Dark mode**: class-based (`class="dark"`), enabled by `next-themes`.
+  All brand colours MUST meet WCAG AA contrast (≥4.5:1 for normal text,
+  ≥3:1 for large text / UI components) in both light and dark modes.
+- **Typography**: System font stack via Geist Sans (already loaded).
+  Heading weights: `font-bold` (700) minimum. Body: `font-medium` (500)
+  or `font-normal` (400). No decorative or display fonts.
+- **Animations & motion**:
+  - Global `shimmer` keyframe defined in `globals.css` for AI loading
+    states (chat bubbles awaiting response, tool-call processing).
+  - The `.animate-shimmer` utility class MUST be used for all AI-related
+    loading spinners / skeletons. No custom per-component keyframes for
+    the same purpose.
+  - Transition durations: 150–300 ms. No animations > 500 ms unless
+    explicitly page-transition scoped.
+- **Glassmorphism standard**: `.glass-panel` utility class defined in
+  `globals.css` — `bg-white/70 backdrop-blur-md border border-white/20
+  shadow-xl` (light); `bg-slate-900/70` override in `.dark`. Apply to
+  modals, cards, floating chat, and Bento grid cells where appropriate.
+- **Scope**: This principle governs ONLY Next.js frontend (App Router),
+  Tailwind CSS, shadcn/ui components, global styles, and metadata.
+  Backend logic, DB schemas, MCP tools, Cohere integration, and Phase IV
+  feature contracts are NOT affected by this principle.
 
 ## Technology Stack & Conventions
 
@@ -199,6 +331,8 @@
   - Chat UI: custom React component (Client Component) with message
     list, input field, and tool-result rendering. No third-party
     chat UI libraries.
+  - Analytics charts: `recharts` only. No Chart.js, D3, or alternatives.
+  - Offline cache: `idb-keyval` only. No Dexie, localForage, etc.
 - **Backend conventions**:
   - Routes under `/api/`, JSON responses only
   - Pydantic for request/response models
@@ -211,9 +345,11 @@
     response
   - Tool definitions MUST be declared as Cohere-compatible function
     schemas (name, description, parameters)
+  - Recurrence: `python-rrule` for RRULE parsing and next-date
+    calculation. No manual date arithmetic for recurrence.
 - **Spec organization**:
-  - `/specs/` root with `overview.md`, `features/`, `api/`, `database/`, `ui/`
-  - Reference format: `@specs/features/task-crud.md`, `@specs/api/rest-endpoints.md`
+  - `/specs/` root with numbered feature directories
+  - Reference format: `@specs/005-due-dates-reminders/spec.md`
 - **CLAUDE.md files**:
   - Root: project overview, workflow, commands
   - `/frontend/CLAUDE.md`: frontend patterns
@@ -223,10 +359,19 @@
   - `phase2-web` — Full-stack web application
     - Features: `[task-crud, authentication]`
   - `phase3-chatbot` — AI chatbot integration
-    - Features: `[task-crud, authentication, chatbot]`
+    - Features: `[task-crud, authentication, chatbot, personal-assistant-ui]`
+  - `phase4-advanced-features` — Advanced productivity features
+    - Features: `[due-dates-reminders, custom-notifications, priorities,
+      tags, recurring-tasks, progress-analytics, offline-pwa,
+      task-notes-attachments]`
 - **Dependencies** (Phase 3 additions):
   - Backend: `cohere` package in `backend/requirements.txt`
   - Frontend: No additional AI dependencies required
+- **Dependencies** (Phase 4 additions — install when feature is implemented):
+  - Backend: `python-rrule` (feature 009 — recurring tasks)
+  - Frontend: `recharts` (feature 010 — analytics)
+  - Frontend: `idb-keyval` (feature 011 — offline PWA)
+  - Frontend: `next-pwa` (feature 011 — optional PWA manifest)
 
 ## Development Workflow & Standards
 
@@ -237,13 +382,15 @@
 - **Project scope**:
   - Completed: Phase I — Console Application
   - Completed: Phase II — Full-Stack Web Application
-  - Current: Phase III — AI Chatbot Features (Cohere API)
+  - Completed: Phase III — AI Chatbot Features (Cohere API)
+  - Current: Phase IV — Advanced Features
 - **Environment variables** (MUST be in `.env`, never hardcoded):
   - `DATABASE_URL` — Neon PostgreSQL connection string
   - `JWT_SECRET_KEY` — shared HS256 signing secret
   - `BETTER_AUTH_SECRET` — Better Auth internal secret
   - `BETTER_AUTH_URL` — Better Auth base URL
   - `CO_API_KEY` — Cohere API key for chat completions and tool use
+  - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — optional, for web push (feature 006)
 - **Docker Compose** for local development:
   - Frontend: port 3000
   - Backend: port 8000
@@ -271,4 +418,4 @@
 - Runtime guidance: see `CLAUDE.md` files at root, frontend, and
   backend for agent-specific development rules.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-18 | **Last Amended**: 2026-02-18
+**Version**: 1.2.1 | **Ratified**: 2026-02-23 | **Last Amended**: 2026-02-24

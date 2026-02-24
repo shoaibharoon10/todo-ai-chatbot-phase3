@@ -9,16 +9,18 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   let session = null;
+  let dbError = false;
   try {
     session = await auth.api.getSession({
       headers: await headers(),
     });
   } catch {
-    // Database not available or auth misconfigured — redirect to login
-    redirect("/login");
+    // Neon unreachable (offline or cold start) — let through to show cached data
+    dbError = true;
   }
 
-  if (!session) {
+  // Only hard-redirect if DB was reachable and returned no session
+  if (!session && !dbError) {
     redirect("/login");
   }
 

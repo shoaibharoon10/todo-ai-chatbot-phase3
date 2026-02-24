@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CheckSquare, LogOut, Menu, MessageSquare, X } from "lucide-react";
+import { BarChart2, CheckSquare, LogOut, Menu, MessageSquare, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
@@ -37,7 +37,7 @@ export function MobileNav() {
           <div className="mx-auto max-w-6xl space-y-1 px-4 py-3">
             {user && (
               <div className="border-b pb-3 dark:border-slate-700">
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{user.name || "User"}</p>
+                <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">{user.name || "User"}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
               </div>
             )}
@@ -46,7 +46,7 @@ export function MobileNav() {
               onClick={() => setOpen(false)}
               className={`flex w-full items-center gap-2 rounded-md py-2 text-sm transition-colors ${
                 pathname === "/tasks"
-                  ? "font-medium text-slate-900 dark:text-slate-50"
+                  ? "font-medium text-indigo-700 dark:text-indigo-300"
                   : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50"
               }`}
             >
@@ -54,11 +54,23 @@ export function MobileNav() {
               Tasks
             </Link>
             <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className={`flex w-full items-center gap-2 rounded-md py-2 text-sm transition-colors ${
+                pathname === "/dashboard"
+                  ? "font-medium text-indigo-700 dark:text-indigo-300"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50"
+              }`}
+            >
+              <BarChart2 className="h-4 w-4" />
+              Dashboard
+            </Link>
+            <Link
               href="/chat"
               onClick={() => setOpen(false)}
               className={`flex w-full items-center gap-2 rounded-md py-2 text-sm transition-colors ${
                 pathname === "/chat"
-                  ? "font-medium text-slate-900 dark:text-slate-50"
+                  ? "font-medium text-indigo-700 dark:text-indigo-300"
                   : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50"
               }`}
             >

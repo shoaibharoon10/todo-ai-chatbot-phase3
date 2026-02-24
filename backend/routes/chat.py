@@ -20,10 +20,13 @@ from models import (
     ToolCallResult,
 )
 from tools.task_tools import (
+    add_tag,
     add_task,
     complete_task,
     delete_task,
+    get_stats,
     list_tasks,
+    tag_task,
     update_task,
 )
 
@@ -88,6 +91,61 @@ TOOLS = [
                     "description": {
                         "type": "string",
                         "description": "Optional task description (max 1000 characters)",
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "description": (
+                            "ISO 8601 UTC datetime for when the task is due "
+                            "(e.g. '2026-02-25T00:00:00Z'). Compute from natural language: "
+                            "'due tomorrow' → next day at midnight UTC, "
+                            "'due next Monday' → next Monday midnight UTC. Omit if not mentioned."
+                        ),
+                    },
+                    "recurrence_rule": {
+                        "type": "string",
+                        "description": (
+                            "RFC 5545 RRULE string for recurring tasks. Generate from natural language: "
+                            "'every day' → 'FREQ=DAILY', "
+                            "'every weekday' → 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', "
+                            "'every Monday' → 'FREQ=WEEKLY;BYDAY=MO', "
+                            "'every month' → 'FREQ=MONTHLY', "
+                            "'weekly' → 'FREQ=WEEKLY'. Omit for non-recurring tasks."
+                        ),
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "urgent"],
+                        "description": (
+                            "Task priority. Infer from user language: "
+                            "'urgent'/'critical'/'ASAP' → 'urgent'; "
+                            "'important'/'high priority' → 'high'; "
+                            "'whenever'/'low priority'/'not important' → 'low'. "
+                            "Omit if not specified (defaults to 'medium')."
+                        ),
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "List of tag names to apply to this task. Tags are created automatically "
+                            "if they don't exist. Example: ['work', 'shopping']."
+                        ),
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": (
+                            "Freeform notes or additional context for the task (max 5000 chars). "
+                            "Use when user says 'add a note', 'remind me to', 'with the following details', "
+                            "or provides detailed context beyond the title. "
+                            "Example: 'remember to bring the signed contract'."
+                        ),
+                    },
+                    "reminder_offset_minutes": {
+                        "type": "integer",
+                        "description": (
+                            "Minutes before due_date to fire a browser notification "
+                            "(e.g. 15, 30, 60, 120, 1440). Only used when due_date is also set."
+                        ),
                     },
                 },
                 "required": ["title"],
@@ -155,7 +213,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "update_task",
-            "description": "Update a task's title, description, or completion status. Only provided fields are changed. Returns the updated task.",
+            "description": "Update a task's title, description, completion status, or due date. Only provided fields are changed. Returns the updated task.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -175,8 +233,103 @@ TOOLS = [
                         "type": "boolean",
                         "description": "Set completion status directly",
                     },
+                    "due_date": {
+                        "type": "string",
+                        "description": (
+                            "ISO 8601 UTC datetime for when the task is due "
+                            "(e.g. '2026-02-25T00:00:00Z'). Pass 'null' to clear an existing due date. "
+                            "Compute from natural language: 'due tomorrow' → next day at midnight UTC."
+                        ),
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "urgent"],
+                        "description": (
+                            "New priority for the task. Infer from user language: "
+                            "'urgent'/'critical'/'ASAP' → 'urgent'; "
+                            "'important'/'high priority' → 'high'; "
+                            "'whenever'/'low priority' → 'low'."
+                        ),
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": (
+                            "New notes content for the task (max 5000 chars). "
+                            "Use when user says 'add a note to task', 'update notes', or provides extra context. "
+                            "Example: 'call client at 3pm'."
+                        ),
+                    },
+                    "clear_notes": {
+                        "type": "boolean",
+                        "description": "Set to true to remove/clear existing notes from the task.",
+                    },
+                    "reminder_offset_minutes": {
+                        "type": "integer",
+                        "description": (
+                            "Minutes before due_date to fire a browser notification "
+                            "(e.g. 15, 30, 60, 120, 1440). Only used when due_date is also set."
+                        ),
+                    },
                 },
                 "required": ["task_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_stats",
+            "description": (
+                "Returns task productivity statistics: total tasks, completed, pending, "
+                "overdue count, and completion rate. Use when the user asks about their "
+                "progress, productivity, how many tasks they have done, or how they are doing."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_tag",
+            "description": "Create a new tag for the user (idempotent — returns existing tag if name already exists). Use this to create tags before applying them.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Tag name (1-50 characters)",
+                    },
+                    "color": {
+                        "type": "string",
+                        "description": "Hex colour for the tag (e.g. '#6366f1'). Defaults to indigo if omitted.",
+                    },
+                },
+                "required": ["name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tag_task",
+            "description": "Apply a tag to a task by task ID and tag name. The tag is created automatically if it does not exist.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "integer",
+                        "description": "The ID of the task to tag",
+                    },
+                    "tag_name": {
+                        "type": "string",
+                        "description": "Name of the tag to apply to the task",
+                    },
+                },
+                "required": ["task_id", "tag_name"],
             },
         },
     },
@@ -189,6 +342,9 @@ TOOL_DISPATCH = {
     "complete_task": complete_task,
     "delete_task": delete_task,
     "update_task": update_task,
+    "add_tag": add_tag,
+    "tag_task": tag_task,
+    "get_stats": get_stats,
 }
 
 

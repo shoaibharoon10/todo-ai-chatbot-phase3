@@ -37,7 +37,7 @@ export function FloatingChat({ userId, userName, userEmail }: FloatingChatProps)
       ) : (
         <div className="flex h-[480px] w-[360px] flex-col overflow-hidden rounded-xl border bg-white shadow-xl dark:border-slate-700 dark:bg-slate-950">
           {/* Header */}
-          <div className="flex items-center justify-between bg-indigo-600 px-3 py-2 text-white">
+          <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-500 px-3 py-2 text-white">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               <span className="text-sm font-semibold">AI Assistant</span>
