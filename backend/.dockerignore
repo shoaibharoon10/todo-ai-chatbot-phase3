@@ -1,0 +1,40 @@
+# ── TaskPulse Backend — .dockerignore ───────────────────────────────────────
+# Secrets — use Hugging Face Space Secrets instead
+.env
+.env.*
+!.env.example
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Version control
+.git/
+.gitignore
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Test artefacts
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# Local dev
+*.log
